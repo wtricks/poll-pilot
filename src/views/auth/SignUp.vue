@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import useAlertStore from '../../store/useAlert'
-import useUsers from '../../store/useUsers'
 
 import Input from '../../components/Input.vue'
 import Button from '../../components/Button.vue'
 import { useRouter } from 'vue-router';
+import { signUp } from '../../store/useAuth';
 
 const fname = ref('')
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
+const loading = ref(false)
+
 
 const { show } = useAlertStore()
 const router = useRouter();
@@ -37,21 +39,15 @@ const onSignUp = () => {
     }
 
     else {
-        const { findBy, addUser } = useUsers();
+        loading.value = true;
+        signUp(fname.value, email.value, password.value, (done) => {
+            if (done) {
+                router.push('/auth/signin')
+                show('Verify your email address before signin.')
+            }
 
-        if (findBy('email', email.value)) {
-            show('Email address is already taken.')
-            return
-        }
-
-        addUser(fname.value, email.value, password.value);
-
-        fname.value = email.value = password.value = confirmPassword.value = '';
-        show('Your account is created, Sign in now.')
-
-        setTimeout(() => {
-            router.push('/auth/signin')
-        }, 2000)
+            loading.value = false;
+        })
     }
 
 }
@@ -102,7 +98,7 @@ const onSignUp = () => {
             By creating account, you agree to our <RouterLink to="/pages/terms" class="text-blue-600 hover:text-blue-500" title="Terms and conditions">terms</RouterLink> and <RouterLink to="/pages/terms" class="text-blue-600 hover:text-blue-500" title="Privacy Policy">privacy</RouterLink>.
         </p>
 
-        <Button variant="primary" class="w-full justify-center mt-8">
+        <Button variant="primary" class="w-full justify-center mt-8" :disabled="loading">
             Sign Up
         </Button>
 

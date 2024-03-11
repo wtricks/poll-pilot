@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 
 import Input from '../../components/Input.vue'
 import Button from '../../components/Button.vue'
 import useAlertStore from '../../store/useAlert';
-import useUsers from '../../store/useUsers';
-import useAuth from '../../store/useAuth';
+import { signIn } from '../../store/useAuth';
 import { useRouter } from 'vue-router';
+
+import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
+import { db } from '../../firebase';
+
+// router params
+const route = useRoute();
 
 const email = ref('')
 const password = ref('')
+const loading = ref(false)
 
 const { show } = useAlertStore();
 const router = useRouter();
@@ -24,22 +31,29 @@ const onSignIn = () => {
     }
 
     else {
-        const users = useUsers();
-        const user = users.findBy('email', email.value);
-
-        if (!user || user.password != password.value) {
-            show('Invalid credentials.')
-        }
-
-        else {
-            users.addUser(user.fname, user.email, user.password as string);
-            useAuth().changeUser(user);
-
-            show('Logged in successfully.');
-            router.push('/')
-        }
+        loading.value = true;
+        signIn(email.value, password.value, (done) => {
+            if (done) {
+                show('Logged in successfully.');
+                router.push('/')
+            }
+            loading.value = false;
+        })
     }
 }
+
+onMounted(async () => {
+    const q = route.query.token;
+    if (q) {
+        const data = await getDocs(query(collection(db, 'users'), where('token', '==', q)));
+
+        if (!data.empty) {
+            await setDoc(doc(db, 'users', data.docs[0].id), { token: '', isVerified: true }, { merge: true });
+
+            show('Email address is verified, you can signin.')
+        }
+    }
+})
 
 </script>
 
@@ -68,7 +82,7 @@ const onSignIn = () => {
 
        <RouterLink to="/auth/forgot" class="text-blue-600 text-sm text-end hover:text-blue-500 block" title="Forgot password?">Forgot password?</RouterLink>
 
-        <Button variant="primary" class="w-full justify-center mt-8">
+        <Button variant="primary" class="w-full justify-center mt-8" :disabled="loading">
             Sign In
         </Button>
 

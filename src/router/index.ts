@@ -66,9 +66,12 @@ export const router = createRouter({
 
 router.beforeEach((to) => {
     const auth = useAuth();
+    const isGuestPage = ['signin', 'signup', 'forgot', 'reset', '404'].some(route => route == to.name); 
 
-    if (!auth.user && !['signin', 'signup', 'forgot', 'reset', '404'].some(route => route == to.name)) {
+    if (!auth.user && !isGuestPage) {
         return { name: 'signin' }
+    } else if (auth.user && isGuestPage) {
+        return { name: 'home' }
     }
 
     return true;

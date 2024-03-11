@@ -12,7 +12,7 @@ const useAlertStore = defineStore('alerts', () => {
     const addMessage = (value: string | Omit<Message, 'id'>) => {
         const message = Object.assign({
             id: Math.random(),
-            timer: 3000,
+            timer: 4000,
             autoHide: true
         }, typeof value == 'string' ? { message: value } : value);
 
