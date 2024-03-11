@@ -28,7 +28,7 @@ const {user: u}= useAuth()
                 <span>{{  new Date(user.createdAt)  }}</span>
             </p>
 
-            <Button v-if="u.id != user.id" variant="secondry" class="ml-auto" @click="users.removeUser(user.id)">
+            <Button v-if="u?.id != user.id" variant="secondry" class="ml-auto" @click="users.removeUser(user.id)">
                 Remove
             </Button>
         </li>
