@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-const model = defineModel()
+const model = defineModel<string>()
     
 defineProps<{
     type: 'text' | 'email' | 'textarea' | 'select' | 'password',
