@@ -55,7 +55,7 @@ const onCreated = () => {
         const data = Object.assign(props.poll || {
             id: Math.random(),
             createdAt: Date.now(),
-            createdBy: useAuth().user!.id
+            createdBy: useAuth().user!.uid
         }, {
             title: title.value,
             description: description.value,

@@ -23,8 +23,8 @@ const getTotalVote = (total: number) => {
 const onVote = (id: number, option: number) => {
     const index = polls.polls.findIndex(p => p.id == id);
     const current = polls.polls[index];
-    const prev = vote.votes[id + '' + user!.id];
-    const curr = id + '' + user!.id;
+    const prev = vote.votes[id + '' + user!.uid];
+    const curr = id + '' + user!.uid;
     
     if (!isNaN(prev)) {
         console.log("Prev")
@@ -57,7 +57,7 @@ const onVote = (id: number, option: number) => {
                 
                 <ul class="list-none w-full mt-4">
                     <li :key="option.title" v-for="(option, index) in poll.options" :class="`relative w-full border rounded-md p-2 px-3 flex items-center hover:bg-slate-100 cursor-pointer mb-2`" @click="onVote(poll.id, index)">
-                        <span :style="{ width: ((vote.votes[poll.id + '' + user!.id] == index) ? Math.floor(option.vote * 100 / poll.options.reduce((p, c) => p + c.vote, 0)) : 0) + '%' }" class="bg-blue-600 absolute top-0 left-0 h-full block transition-all opacity-50"></span>
+                        <span :style="{ width: ((vote.votes[poll.id + '' + user!.uid] == index) ? Math.floor(option.vote * 100 / poll.options.reduce((p, c) => p + c.vote, 0)) : 0) + '%' }" class="bg-blue-600 absolute top-0 left-0 h-full block transition-all opacity-50"></span>
                         <span class="border-r size-6 flex justify-center items-center mr-2 pr-3 font-semibold">{{ index + 1 }}</span>
                         <span class="text-sm font-medium block ml-3">{{option.title}}</span>
                     </li>

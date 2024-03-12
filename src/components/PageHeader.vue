@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
-import useAuth from '../store/useAuth';
+import useAuth, { logout } from '../store/useAuth';
 import Button from './Button.vue';
 import Poll from './icons/Poll.vue';
 import useAlertStore from '../store/useAlert';
@@ -10,13 +10,10 @@ const router = useRouter();
 const { show } = useAlertStore() 
 const auth = useAuth()
 
-const onLogout = () => {
-    useAuth().changeUser(null!);
-    show('Logged out successfully')
-
-    setTimeout(() => {
-        router.push('/auth/signin')
-    }, 1000)
+const onLogout = async () => {
+    await logout();
+    show('Logged out successfully');
+    router.push('/auth/signin');
 }
 </script>
 
@@ -32,7 +29,7 @@ const onLogout = () => {
             </RouterLink>
 
             <div class="ml-auto flex items-center">
-                <Button title="Logout" class="mr-4" variant="primary" v-if="auth.user?.isAdmin" :path="route.name == 'home'? '/dashboard/polls' : '/'">
+                <Button title="Logout" class="mr-4" variant="primary" v-if="auth!.user?.isAdmin" :path="route.name == 'home'? '/dashboard/polls' : '/'">
                     {{ route.name == 'home' ? 'Dashboard' : 'HomePage' }}
                 </Button>
 

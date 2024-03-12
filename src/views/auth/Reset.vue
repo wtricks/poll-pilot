@@ -1,25 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import Input from '../../components/Input.vue'
 import Button from '../../components/Button.vue'
 import { useRoute, useRouter } from 'vue-router';
-import useUsers from '../../store/useUsers';
 import useAlertStore from '../../store/useAlert';
-import { User } from '../../store/useUsers';
+import { getDocs, query, collection, where, setDoc, doc } from 'firebase/firestore';
+import { auth, db } from '../../firebase';
+import { updatePassword } from 'firebase/auth';
 
 const password = ref('')
 const confirmPassword = ref('')
+const loading = ref(false)
 
 const route = useRoute();
 const router = useRouter();
-const { findBy, addUser } = useUsers()
 const { show } = useAlertStore()
-
-if (!findBy('token', route.params.id as string)) {
-    router.replace('/auth/signin');
-    show('Password reset link is expired!.')
-}
 
 const onReset = () => {
     if (!password.value) {
@@ -35,15 +31,37 @@ const onReset = () => {
     }
 
     else {
-        const user = findBy('token', route.params.id as string) as User;
-        addUser(user.fname, user.email, password.value, '');
-
-        show('You password was reseted!')
-        setTimeout(() => {
-            router.push('/auth/signin')
-        }, 1000)
+        loading.value = true;
+        updatePassword(auth.currentUser!, password.value)
+            .then(() => {
+                router.push('/auth/signin')
+                show('You password was reseted!')
+            })
+            .catch((err: Error) => {
+            show('An error occured: ' + err.message)
+            }).finally(() => {
+            loading.value = false;
+        })
     }
 }
+
+onMounted(async () => {
+    const token = route.params.id;
+    if (!token) {
+        show('Link is expired.')
+        router.push({ name: 'signin' })
+        return
+    }
+
+    const data = await getDocs(query(collection(db, 'users'), where('token', '==', token)));
+
+    if (!data.empty) {
+        await setDoc(doc(db, 'users', data.docs[0].id), { token: '' }, { merge: true });
+    } else {
+        show('Link is expired.')
+        router.push({ name: 'signin' })
+    }
+})
 
 </script>
 
@@ -67,7 +85,7 @@ const onReset = () => {
             v-model="confirmPassword"
         />
 
-        <Button variant="primary" class="w-full justify-center mt-8">
+        <Button variant="primary" class="w-full justify-center mt-8" :disabled="loading">
             Reset
         </Button>
 
@@ -75,4 +93,5 @@ const onReset = () => {
             Back to <RouterLink to="/auth/signin" class="text-blue-600 hover:text-blue-500" title="Terms and conditions">Signin</RouterLink>
         </p>
     </form>
-</template>
+</template>collection, doc, , setDoc, whereimport { User } from 'firebase/auth';
+import { db } from '../../firebase';

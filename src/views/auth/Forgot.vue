@@ -4,9 +4,10 @@ import { ref } from 'vue';
 import Input from '../../components/Input.vue'
 import Button from '../../components/Button.vue'
 import useAlertStore from '../../store/useAlert';
-import useUsers from '../../store/useUsers';
+import { sendPasswordResetLink } from '../../store/useAuth'
 
 const email = ref('')
+const loading = ref(false)
 const { show } = useAlertStore()
 
 const onForgot = () => {
@@ -15,18 +16,14 @@ const onForgot = () => {
     }
 
     else {
-        const user = useUsers().findBy('email', email.value);
-        if (!user) {
-            show('Invalid credentials')
-            return
-        }
+        loading.value = true;
+        sendPasswordResetLink(email.value, (done) => {
+            if (done) {
+                show('We have send a link to your registered email address.')
+            }
 
-        const token = Math.random() + '';
-        useUsers().addUser(user.fname, user.email, user.password as string, token);
-
-        console.log("/auth/reset/" + token);
-
-        show('We have send a link to your registered email address.')
+            loading.value = false;
+        })
     }
 }
 
@@ -47,7 +44,7 @@ const onForgot = () => {
             required
         />
 
-        <Button variant="primary" class="w-full justify-center mt-8">
+        <Button variant="primary" class="w-full justify-center mt-8" :disabled="loading">
             Send link
         </Button>
 
