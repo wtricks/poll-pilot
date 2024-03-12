@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import Button from '../../components/Button.vue';
-import useAuth from '../../store/useAuth';
 import useUsers from '../../store/useUsers';
 
 const users = useUsers()
-const {user: u}= useAuth()
 
 </script>
 
@@ -13,24 +10,25 @@ const {user: u}= useAuth()
         <h2 class="text-2xl font-semibold">Users</h2>
     </div>
 
-    <ul class="list-none w-full">
-        <li v-for="user in users.users" class="border p-2 bg-slate-50 hover:bg-slate-100 mb-2 rounded-xl flex items-center">
-            <p class="text-sm">
-                <b class="mr-2">Name:</b>
-                <span>{{  user.fname  }}</span>
-                <br>
-
-                <b class="mr-2">Email:</b>
-                <span>{{  user.email  }}</span>
-                <br>
-
-                <b class="mr-2">Resgisered:</b>
-                <span>{{  new Date(user.createdAt)  }}</span>
-            </p>
-
-            <Button v-if="u?.uid != (user.id+'')" variant="secondry" class="ml-auto" @click="users.removeUser(user.id)">
-                Remove
-            </Button>
-        </li>
-    </ul>
+    <table class="w-full">
+        <thead>
+            <tr class="w-full border">
+                <th class="p-1 font-bold text-sm">Name</th>
+                <th class="p-1 font-bold text-sm">Username</th>
+                <th class="p-1 font-bold text-sm">Email</th>
+                <th class="p-1 font-bold text-sm">RegisteredAt</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="w-full border hover:bg-slate-100" v-for="user of users.users" :key="user.uid">
+                <td class="p-1 text-sm">{{user.fname}}</td>
+                <td class="p-1 text-sm">{{user.username}}</td>
+                <td class="p-1 text-sm">{{user.email}}</td>
+                <td class="p-1 text-sm">{{user.registeredAt}}</td>
+            </tr>
+        </tbody>
+    </table>
+    <p v-if="users.users.length == 0" class="mt-12 text-lg text-center font-sans">
+        No users found
+    </p>
 </template>

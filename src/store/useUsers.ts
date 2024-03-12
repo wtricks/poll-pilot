@@ -1,71 +1,70 @@
-import { reactive, toRaw, watch } from 'vue'
+import { reactive } from 'vue'
 import { defineStore } from 'pinia'
 
-export interface User {
-    id: number,
-    fname: string,
-    email: string,
-    password: string | number,
-    createdAt: number,
-    updatedAt: number,
-    isAdmin?: boolean,
-    token?: string
+import type{ U  } from './useAuth'
+import { collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc, startAfter } from 'firebase/firestore'
+import { db } from '../firebase'
+import useAlertStore from './useAlert'
+
+interface Option {
+    limit: number,
+    order: [by: keyof U, type?: 'desc' | 'asc'],
+    reset: boolean,
+    insert: 'push' | 'unshift'
 }
 
 const useUsers = defineStore('users', () => {
-    const users = reactive<User[]>(JSON.parse(window.localStorage.getItem('pp__users') || "[]") as User[]);
+    const users = reactive<U[]>([]);
+    const col = collection(db, 'users');
+    const { show } = useAlertStore();
 
-    const findBy = <T extends keyof User>(by: T, prop: string) => {
-        const index = users.findIndex(user => user[by] == prop)
-        if (index == -1) {
-            return null;
+    const fetch = async (options: Option) => {
+        if (options.reset) {
+            // remove everything
+            users.splice(0)
         }
 
-        return users[index];
-    }
+        const start = users.length
+            ? [startAfter(users[users.length - 1])]
+            : []
 
-    const addUser = (name: string, email: string, password: string, token?: string ) => {
-        const user = findBy('email', email);
-        const newUser: User = (user ? user : {
-            fname: name,
-            email: email,
-            password: password,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            id: Math.random()
+        const queryRef = query(col, orderBy(options.order[0], options.order[1]), ...start, limit(options.limit));
+
+        const docs = await getDocs(queryRef);
+
+        docs.forEach(async (d) => {
+            users[options.insert]({
+                uid: d.id,
+                ...d.data()
+            } as U)
         })
-
-        newUser.email = email;
-        newUser.fname = name;
-        newUser.password = password;
-
-        if (token == undefined) {
-            newUser.updatedAt = Date.now();
-        } else {
-            newUser.token = token;
-        }
-
-        if (user) {
-            users[users.findIndex(user => user.email == email)] = newUser;
-        } else {
-            users.push(newUser);
-        }
     }
 
-    const removeUser = (id: number) => {
-        const index = users.findIndex(user => user.id == id)
-        if (index == -1) {
-            return;
+    const remove = async (uid: string) => {
+        await deleteDoc(doc(db, 'users', uid))
+        users.splice(users.findIndex(user => user.uid == uid));
+
+        show('User with ID: ' + uid + ' is removed.')
+    }
+
+    const update = async (uid: string, username: string, fname: string) => {
+        const d = doc(db, 'users', uid);
+        if (!(await getDoc(d)).exists()) {
+            show('User with ID: ' + uid + ' is not found.')
+            return
         }
-        
-        users.splice(index, 1)
-    } 
 
-    watch(users, () => {
-        window.localStorage.setItem('pp__users', JSON.stringify(toRaw(users)))
-    }, { immediate: true })
+        await setDoc(d, { username, fname })
+        const user = users[users.findIndex(user => user.uid == uid)];
+        user.username = username;
+        user.fname = fname;
 
-    return { users, findBy, addUser, removeUser }
+        show('User with ID: ' + uid + ' is updated.')
+    }
+
+    fetch({ limit: 10, reset: false, order: ['registeredAt', 'asc'], insert: 'push' })
+
+    return { users, remove, fetch, update }
 })
 
 export default useUsers

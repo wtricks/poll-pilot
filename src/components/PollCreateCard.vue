@@ -6,7 +6,6 @@ import Cross from './icons/Cross.vue';
 import Plus from './icons/Plus.vue';
 import useAlertStore from '../store/useAlert';
 import { Poll } from '../store/usePolls';
-import useAuth from '../store/useAuth';
 
 const { show } = useAlertStore();
 
@@ -27,7 +26,7 @@ const props = defineProps<{ poll?: Poll }>()
 
 const emit = defineEmits<{
     onClose: [],
-    onCreate: [poll: Poll]
+    onCreate: [title: string, description: string, Poll['options']]
 }>()
 
 const addInput = (index: number) => {
@@ -52,33 +51,21 @@ const onCreated = () => {
     }
 
     else {
-        const data = Object.assign(props.poll || {
-            id: Math.random(),
-            createdAt: Date.now(),
-            createdBy: useAuth().user!.uid
-        }, {
-            title: title.value,
-            description: description.value,
-            updateAt: Date.now(),
-            options: options.map((p, i) => {
-                if (props.poll) {
-                    return {
-                        title: p.value,
-                        vote: props.poll.options[i]?.vote || 0
-                    }
+        emit('onCreate', title.value, description.value, options.map((p, i) => {
+            if (props.poll) {
+                return {
+                    title: p.value,
+                    vote: props.poll.options[i]?.vote || 0
                 }
+            }
 
-                return { title: p.value, vote: 0 }
-            })
-        }) as Poll;
+            return { title: p.value, vote: 0 }
+        }))
 
-        emit('onCreate', data);
-        emit('onClose');
-
-        title.value = description.value = '';
         options.splice(0)
         options.push({ id: 'Option1', value: '' })
         options.push({ id: 'Option2', value: '' })
+        title.value = description.value = '';
     }
 }
 
