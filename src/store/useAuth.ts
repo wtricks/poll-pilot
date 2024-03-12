@@ -51,6 +51,12 @@ const useAuth = defineStore('auth', () => {
 
         const dbUser = await getDoc(doc(db, 'users', user.uid));
         if (dbUser.exists()) {
+            const d = dbUser.data();
+            if (!d.isVerified) {
+                initialUser.value = null;
+                return
+            }
+
             initialUser.value = {
                 ...dbUser.data(),
                 registeredAt: user.metadata.creationTime,
@@ -95,7 +101,7 @@ export const signUp = (fname: string, email: string, password: string, next: (er
             // send an email verification link
             sendEmailVerification(auth.currentUser as User, {
                 url: window.location.href.split("/").slice(0, 3).join("/") + '/auth/signin?token=' + token,
-                handleCodeInApp: true
+                handleCodeInApp: false
             }).then(() => { 
                 next(true);
             }).catch((err: Error) => {
@@ -147,7 +153,7 @@ export const sendPasswordResetLink = async (email: string, next: (err: boolean) 
 
     sendPasswordResetEmail(auth, email, {
         url: window.location.href.split("/").slice(0, 3).join("/") + '/auth/reset/' + token,
-        handleCodeInApp: true
+        handleCodeInApp: false
     }).then(() => {
         next(true);
     }).catch((err: Error) => {
