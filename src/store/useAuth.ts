@@ -12,17 +12,18 @@ import {
     sendPasswordResetEmail,
 } from "firebase/auth";
 
-import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
+import { Timestamp, collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 
 import useAlertStore from "./useAlert"
 import { useRouter } from "vue-router";
 
-interface U {
+export interface U {
     uid: string,
     username: string,
     email: string,
-    registeredAt?: string,
-    lastLoginAt?: string,
+    fname: string,
+    registeredAt: string,
+    lastLoginAt: string,
     token?: string,
     isVerified: boolean,
     isAdmin?: boolean
@@ -58,7 +59,8 @@ const useAuth = defineStore('auth', () => {
             }
 
             initialUser.value = {
-                ...dbUser.data(),
+                ...d,
+                uid: dbUser.id,
                 registeredAt: user.metadata.creationTime,
                 lastLoginAt: user.metadata.lastSignInTime
             } as U;
@@ -92,9 +94,10 @@ export const signUp = (fname: string, email: string, password: string, next: (er
             await setDoc(doc(db, 'users', user.user.uid), {
                 name: fname,
                 email: email,
-                username: fname.replace(/\s*/, '').toLowerCase() + (Math.random() * 99999),
+                username: fname.replace(/\s*/, '').toLowerCase() + Math.floor(Math.random() * 99999),
                 token: token,
-                isVerified: false
+                isVerified: false,
+                registeredAt: Timestamp.fromDate(new Date()),
             }, { merge: true })
 
 
